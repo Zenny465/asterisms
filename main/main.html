@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Asterisms Prototype_Yuma - Constellation Creator</title>
+  
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; } /* overflow: hiddenを追加 */
+    #app { position: fixed; inset: 0; }
+
+    /* 全てのUI要素の共通スタイル */
+    .ui-panel {
+      position: fixed;
+      background: rgba(0, 0, 0, 0.65); /* 半透明の黒 */
+      backdrop-filter: blur(8px); /* ぼかし効果 */
+      border-radius: 14px;
+      padding: 15px 20px;
+      line-height: 1.4;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+      font-family: 'Segoe UI', Roboto, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      color: #E0E0E0; /* 明るいグレーのテキスト */
+      user-select: none;
+      pointer-events: auto; /* クリック可能にする */
+      transition: opacity 0.3s ease-in-out; /* フェードイン・アウト */
+    }
+
+    .ui-panel h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: #F8F8F8; /* より明るいテキスト */
+      font-size: 1.2em;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 8px;
+    }
+
+    /* ボタンの共通スタイル */
+    .ui-button {
+      padding: 8px 16px;
+      font-size: 0.95em;
+      color: white;
+      background-color: rgba(60, 140, 255, 0.7); /* 青系のボタン */
+      border: 1px solid rgba(100, 180, 255, 0.5);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+      margin: 4px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .ui-button:hover {
+      background-color: rgba(80, 160, 255, 0.9);
+      border-color: rgba(120, 200, 255, 0.7);
+      transform: translateY(-1px);
+    }
+    .ui-button:active {
+      background-color: rgba(40, 100, 200, 1);
+      border-color: rgba(60, 120, 220, 0.8);
+      transform: translateY(0);
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.4);
+    }
+    .ui-button.active-mode {
+      background-color: rgba(150, 200, 255, 0.9); /* アクティブモードの色 */
+      color: #333;
+      border-color: rgba(200, 230, 255, 0.7);
+      font-weight: bold;
+    }
+
+
+    /* 各パネルの配置 */
+    #mode-selection-panel {
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex; /* ボタンを横並びに */
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    #create-mode-panel {
+      top: 100px;
+      left: 20px;
+      width: 320px;
+      z-index: 990;
+    }
+
+    #explore-mode-panel {
+      top: 100px;
+      right: 20px;
+      width: 320px;
+      z-index: 990;
+    }
+
+    /* 入力フィールド */
+    .ui-input {
+      width: calc(100% - 20px);
+      padding: 8px 10px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      background-color: rgba(25, 25, 50, 0.8); /* 暗めの背景 */
+      color: #F0F0F0;
+      font-size: 0.95em;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .ui-input::placeholder {
+      color: #A0A0A0;
+    }
+    .ui-input:focus {
+      border-color: rgba(100, 180, 255, 0.7);
+      box-shadow: 0 0 0 2px rgba(100, 180, 255, 0.3);
+    }
+
+    /* 星数カウンター */
+    #star-count {
+      margin-bottom: 15px;
+      font-size: 1.1em;
+      font-weight: 500;
+      color: #ADD8E6; /* 明るい水色 */
+    }
+
+    /* 自分の星座リスト */
+    #my-constellations-list {
+      max-height: 400px; /* スクロール可能にする */
+      overflow-y: auto;
+      margin-top: 15px;
+      padding-right: 5px; /* スクロールバーとの間隔 */
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 10px;
+    }
+    #my-constellations-list::-webkit-scrollbar {
+      width: 8px;
+    }
+    #my-constellations-list::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+    #my-constellations-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+    #my-constellations-list::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .constellation-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      margin-bottom: 5px;
+      background-color: rgba(30, 30, 60, 0.7);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, border 0.2s ease;
+      border: 1px solid transparent;
+    }
+    .constellation-item:hover {
+      background-color: rgba(40, 40, 80, 0.9);
+      border-color: rgba(100, 180, 255, 0.3);
+    }
+    .constellation-item.selected {
+      background-color: rgba(50, 50, 100, 0.9);
+      border-color: #77bbff;
+      box-shadow: 0 0 0 2px #77bbff;
+    }
+    .constellation-item span {
+      font-size: 0.95em;
+      color: #EAEAEA;
+    }
+    .constellation-item button {
+      background-color: rgba(255, 80, 80, 0.7); /* 赤系の削除ボタン */
+      border: 1px solid rgba(255, 120, 120, 0.5);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    .constellation-item button:hover {
+      background-color: rgba(255, 100, 100, 0.9);
+      border-color: rgba(255, 140, 140, 0.7);
+    }
+
+    /* その他のUI */
+    .back-button {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 200;
+    }
+    .back-button button {
+      padding: 10px 20px;
+      font-size: 1em;
+      color: white;
+      background-color: rgba(0, 0, 0, 0.6);
+      border: 1px solid #aaa;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .back-button button:hover {
+      background-color: rgba(80, 80, 80, 0.9);
+    }
+
+    .legend {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      color: #B0B0B0;
+      font-size: 13px;
+      font-family: system-ui, sans-serif;
+      opacity: .8;
+      z-index: 100;
+    }
+
+    #tooltip {
+      position: fixed;
+      background: rgba(28, 28, 74, 0.85); /* ツールチップの背景を少し濃く */
+      color: white;
+      padding: 6px 10px; /* パディングを少し増やす */
+      border-radius: 6px; /* 角を少し丸く */
+      font-size: 13px;
+      pointer-events: none;
+      display: none;
+      white-space: nowrap;
+      z-index: 2000; /* 最前面に表示 */
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    /* main.html 内の style タグ内に追加 */
+
+    /* ゲームモード選択パネルは削除されるため、このスタイルは不要になりますが、念のため残しておきます。
+       ただし、中身がなくなるので最終的には削除されます。 */
+    #game-mode-selection-panel {
+      top: 20px;
+      right: 20px; /* 右上に配置 */
+      transform: translateX(0); /* translateXを削除 */
+      display: flex; /* ボタンを横並びに */
+      gap: 10px;
+      z-index: 1000;
+      justify-content: flex-end; /* 右寄せ */
+    }
+  </style>
+
+  <!-- Three.js（CDN）-->
+  <script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
+  <!-- TWEEN.js （stars_func.js で使用されているため追加） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.min.js"></script>
+
+
+  <!-- ★ 最重要：JSONをJS化したデータを先に読む（同フォルダに stars_data.js を置く） -->
+  <script src="stars_data.js"></script>
+  <!-- ★ 新規: 保存された星座データ（constellations_data.jsは空の配列を想定） -->
+  <script src="constellations_data.js"></script> 
+</head>
+<body>
+  <div id="app"></div>
+
+  <!-- Backボタン -->
+  <div class="back-button">
+    <button onclick="location.href='../home/home.html'">Back</button>
+  </div>
+
+  <!-- モード選択パネル -->
+  <div id="mode-selection-panel" class="ui-panel">
+    <button id="explore-mode-btn" class="ui-button active-mode">Explore Mode</button>
+    <button id="create-mode-btn" class="ui-button">Create Mode</button>
+  </div>
+
+  <!-- BGM ON/OFF ボタン -->
+  <!-- <div id="bgm-control-panel" class="ui-panel" style="top: 20px; right: 20px; padding: 8px 15px; ">
+    <button id="bgm-toggle-btn" class="ui-button">BGM: OFF</button>
+  </div> -->
+
+  <!-- 星座創造モードパネル -->
+  <div id="create-mode-panel" class="ui-panel" style="display: none;">
+    <h3>Create New Constellation</h3>
+    <input type="text" id="constellation-name-input" class="ui-input" placeholder="Enter constellation name..." maxlength="50" />
+    <div id="star-count">Stars selected: 0</div>
+    <button id="save-constellation-btn" class="ui-button" disabled>Save Constellation</button>
+    <button id="clear-all-btn" class="ui-button">Clear All</button>
+  </div>
+   
+  <!-- 探索モードパネル -->
+  <div id="explore-mode-panel" class="ui-panel">
+    <h3>My Constellations</h3>
+    <div id="my-constellations-list">
+      <!-- ユーザーが作成した星座がここに動的に挿入されます -->
+      <p style="color: #A0A0A0; font-size: 0.9em; text-align: center; margin-top: 20px;">No constellations saved yet.</p>
+    </div>
+  </div>
+
+
+  <div class="legend">データ: Hipparcos I/239（抽出: 視等級 ≤ 5）。RA/Dec は度、地球（観測者）は原点。</div>
+  <div id="tooltip"></div>
+
+  <script>
+  // ====== 基本セットアップ ======
+  const app = document.getElementById('app');
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 1);
+  app.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1e6);
+  camera.position.set(0, 0, 0.1); // 観測者はほぼ原点
+
+  // ====== 星レイヤ ======
+  const BINS = [
+    { maxMag: 1,    size: 6.0 },
+    { maxMag: 2,    size: 4.8 },
+    { maxMag: 3,    size: 3.6 },
+    { maxMag: 4,    size: 2.6 },
+    { maxMag: 5.01, size: 1.9 },
+  ];
+
+  const RADIUS = 1000;
+
+  function createLayer() {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(0), 3));
+    geom.setAttribute('color',    new THREE.Float32BufferAttribute(new Float32Array(0), 3));
+    const mat = new THREE.PointsMaterial({
+      size: 2.0,
+      sizeAttenuation: true,
+      vertexColors: true,
+      transparent: true,
+      opacity: 1.0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const pts = new THREE.Points(geom, mat);
+    return { geom, mat, pts, positions: [], colors: [], data: [] };
+  }
+
+  const layers = BINS.map(() => createLayer());
+
+  function magToBrightness(mag){
+    const rel = Math.pow(2.512, -mag);
+    const scaled = rel / Math.pow(2.512, 1.5);
+    return Math.min(1, Math.max(0.05, scaled * 10));
+  }
+
+  function whichBin(mag){
+    for (let i=0;i<BINS.length;i++) if (mag <= BINS[i].maxMag) return i;
+    return BINS.length - 1;
+  }
+
+  function loadStarsFromData(stars){
+    for (const s of stars){
+      const mag = Number(s.mag);
+      if (!isFinite(mag) || mag > 5.01) continue;
+      const ra  = (Number(s.ra)  || 0) * Math.PI/180;
+      const dec = (Number(s.dec) || 0) * Math.PI/180;
+
+      const x = RADIUS * Math.cos(dec) * Math.cos(ra);
+      const y = RADIUS * Math.sin(dec);
+      const z = RADIUS * Math.cos(dec) * Math.sin(ra);
+
+      const brightness = magToBrightness(mag);
+      const i = whichBin(mag);
+      const layer = layers[i];
+      layer.positions.push(x, y, z);
+      layer.colors.push(brightness, brightness, brightness);
+      layer.data.push({ name: s.name || '(不明)', mag, originalIndex: s.originalIndex }); // originalIndex を追加
+    }
+
+    layers.forEach((layer, idx)=>{
+      const { positions, colors, geom, mat, pts } = layer;
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(positions), 3));
+      geom.setAttribute('color',    new THREE.Float32BufferAttribute(new Float32Array(colors),    3));
+      mat.size = BINS[idx].size;
+      scene.add(pts);
+    });
+  }
+
+  // ★ ここでグローバル変数 STARS_DATA を渡す（stars_data.js で定義済み）
+  // stars_data.js の各星に一意の originalIndex を割り当てる
+  const STARS_DATA_WITH_INDEX = STARS_DATA.map((s, i) => ({ ...s, originalIndex: i }));
+  loadStarsFromData(STARS_DATA_WITH_INDEX);
+
+  // ====== ドラッグ回転＆ズーム ======
+  let isDragging = false; let lastX = 0, lastY = 0; let yaw = 0, pitch = 0;
+  const euler = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+  yaw = euler.y; pitch = euler.x;
+  const MIN_PITCH = -Math.PI/2 + 0.01; const MAX_PITCH = Math.PI/2 - 0.01;
+
+  renderer.domElement.addEventListener('mousedown', (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+  window.addEventListener('mouseup', () => { isDragging = false; });
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - lastX; const dy = e.clientY - lastY; lastX = e.clientX; lastY = e.clientY;
+    const ROTATE_SPEED = 0.0045; yaw -= dx * ROTATE_SPEED; pitch -= dy * ROTATE_SPEED; pitch = Math.max(MIN_PITCH, Math.min(MAX_PITCH, pitch));
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); camera.quaternion.copy(q);
+  });
+  window.addEventListener('wheel', (e) => { const d = Math.sign(e.deltaY); camera.fov = THREE.MathUtils.clamp(camera.fov + d * 2.2, 20, 85); camera.updateProjectionMatrix(); }, { passive: true });
+
+  // ====== Raycasterによる星情報表示 ======
+  const raycaster = new THREE.Raycaster();
+  raycaster.params.Points.threshold = 8; // ヒット半径(px)
+  const mouse = new THREE.Vector2();
+  const tooltip = document.getElementById('tooltip');
+
+  window.addEventListener('mousemove', (event) => {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    let intersects = [];
+    for (const layer of layers) {
+      const hit = raycaster.intersectObject(layer.pts);
+      if (hit.length > 0) {
+        // ヒットした星のデータを userData に設定
+        hit.forEach(h => {
+            const starData = layer.data[h.index];
+            if (starData) h.userData = { ...starData, threeObject: layer.pts, threeObjectIndex: h.index };
+        });
+        intersects = intersects.concat(hit);
+      }
+    }
+
+    if (intersects.length > 0) {
+      const nearest = intersects[0];
+      const d = nearest.userData;
+      if (d) { // d が null でないことを確認
+          tooltip.style.display = 'block';
+          tooltip.style.left = (event.clientX + 12) + 'px';
+          tooltip.style.top  = (event.clientY + 12) + 'px';
+          tooltip.textContent = `${d.name} | mag: ${d.mag}`;
+      } else {
+          tooltip.style.display = 'none';
+      }
+    }
+    else {
+      tooltip.style.display = 'none';
+    }
+  });
+
+  // ====== レンダリングループ ======
+  function tick(){
+    renderer.render(scene, camera);
+    // stars_func.js 内のマーカー再スケール処理を呼び出すためのフック
+    // stars_func.js で定義される `updateMarkerScales` を呼び出す
+    if (typeof updateMarkerScales === 'function') {
+      updateMarkerScales();
+    }
+    // TWEEN.js が読み込まれている場合、アニメーションを更新
+    if (window.TWEEN) {
+        TWEEN.update();
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+
+  // ====== リサイズ ======
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+  </script>
+
+  <!-- stars_func.js を最後に読み込むことで、上記のグローバル変数にアクセスできるようにする -->
+  <script src="stars_func.js"></script>
+  <script src="bgm.js"></script>
+  <!-- stars_game.js は削除されるため、ここでは読み込まない -->
+</body>
+</html>

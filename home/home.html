@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+	.diy-bg {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+		background-image: url(loginbd.jpg);
+		background-size: 100% 100%;
+	}
+</style>
+</head>
+
+<body style="margin: 0;">
+<div id="particles-js" class="diy-bg">
+    <canvas class="particles-js-canvas-el" width="980" height="1742" style="width: 100%; height: 100%;"></canvas>
+</div>
+
+<!-- Startボタン -->
+<div class="button-container">
+  <button id="start-btn" aria-label="Start to Main">Start</button>
+</div>
+
+
+
+
+<style>
+.button-container {
+  position: absolute;
+  top: 65%;               /* ちょい下げる */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 1000;          /* particles/canvas より前面に */
+}
+
+/* 宇宙系ネオングロー＋ガラス質感 */
+#start-btn {
+  padding: 14px 46px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #eaf6ff;
+  background: linear-gradient(135deg, rgba(10,18,40,.75), rgba(30,50,95,.75));
+  border: 1px solid rgba(160,220,255,.55);
+  border-radius: 40px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 0 18px rgba(120,200,255,.35), inset 0 0 12px rgba(120,200,255,.15);
+  text-transform: uppercase;
+  transition: transform .25s ease, box-shadow .25s ease, letter-spacing .25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 流れ星っぽい斜めのシャイン */
+#start-btn::before {
+  content: "";
+  position: absolute;
+  top: -120%;
+  left: -30%;
+  width: 60%;
+  height: 300%;
+  transform: rotate(25deg);
+  background: linear-gradient(transparent, rgba(255,255,255,.45), transparent);
+  filter: blur(2px);
+  animation: shine 4s linear infinite;
+}
+
+/* ほわっとした呼吸グロー */
+@keyframes breathe {
+  0%,100% { box-shadow: 0 0 14px rgba(120,200,255,.35), inset 0 0 10px rgba(120,200,255,.15); }
+  50%     { box-shadow: 0 0 26px rgba(160,220,255,.85), 0 0 50px rgba(80,160,255,.45), inset 0 0 16px rgba(160,220,255,.25); }
+}
+#start-btn { animation: breathe 3.2s ease-in-out infinite; }
+
+/* ホバー時の上品な強調 */
+#start-btn:hover {
+  transform: translateZ(0) scale(1.05);
+  letter-spacing: 0.18em;
+}
+
+/* クリック時の押し込み */
+#start-btn:active { transform: scale(.98); }
+
+/* シャイン走行 */
+@keyframes shine {
+  0%   { left: -40%; }
+  100% { left: 140%; }
+}
+
+/* クリック時に飛ぶ星屑 */
+.spark {
+  position: fixed;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #c7f0ff 0%, #53b6ff 40%, rgba(83,182,255,0) 70%);
+  pointer-events: none;
+  z-index: 1200;
+  animation: spark 700ms ease-out forwards;
+}
+@keyframes spark {
+  0%   { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; }
+}
+
+/* 背景の見映えも少し改善（任意） */
+.diy-bg{
+  background-size: cover;        /* 100% 100% → 画面縦横比に合わせて切り抜き */
+  background-position: center;
+}
+</style>
+
+<script>
+  // 星屑アニメーションをばら撒いてから遷移
+  const btn = document.getElementById('start-btn');
+  btn.addEventListener('click', (e) => {
+    const { clientX: x, clientY: y } = e;
+
+    // 小さな星（スパーク）を複数生成
+    for (let i = 0; i < 18; i++) {
+      const s = document.createElement('div');
+      s.className = 'spark';
+      // 画面上に配置
+      s.style.left = x + 'px';
+      s.style.top  = y + 'px';
+      // ランダムな飛び方向
+      const angle = Math.random() * Math.PI * 2;
+      const dist  = 60 + Math.random() * 80; // 飛距離
+      s.style.setProperty('--dx',  Math.cos(angle) * dist + 'px');
+      s.style.setProperty('--dy',  Math.sin(angle) * dist + 'px');
+      document.body.appendChild(s);
+      // 終わったら掃除
+      setTimeout(() => s.remove(), 750);
+    }
+
+    // 演出を250msだけ見せてから main へ
+    setTimeout(() => {
+      location.href = '../main/main.html';
+    }, 250);
+  });
+</script>
+
+
+
+
+<script src="particles.min.js"></script>
+<script>
+    particlesJS("particles-js", {
+        particles: {
+            number: {
+                value: 120,
+                density: {
+                    enable: true,
+                    value_area: 800
+                }
+            },
+    
+            color: {
+                value: "#ffffff"
+            },
+            shape: {
+                type: "circle",
+                stroke: {
+                    width: 0,
+                    color: "#000000"
+                },
+                polygon: {
+                    nb_sides: 5
+                },
+                image: {
+                    src: "img/github.svg",
+                    width: 100,
+                    height: 100
+                }
+            },
+            opacity: {
+                value: .5,
+                random: false,
+                anim: {
+                    enable: false,
+                    speed: 1,
+                    opacity_min: .1,
+                    sync: false
+                }
+            },
+            size: {
+                value: 1,
+                random: true,
+                anim: {
+                    enable: false,
+                    speed: 20,
+                    size_min: .1,
+                    sync: false
+                }
+            },
+            line_linked: {
+                enable: true,
+                distance: 40,
+                color: "#fff",
+                opacity: 1,
+                width: 1
+            },
+            move: {
+                enable: true,
+                speed: 3,
+                direction: "none",
+                random: false,
+                straight: false,
+                out_mode: "out",
+                attract: {
+                    enable: false,
+                    rotateX: 600,
+                    rotateY: 1200
+                }
+            }
+        },
+        interactivity: {
+            detect_on: "canvas",
+            events: {
+                onhover: {
+                    enable: true,
+                    mode: "grab"
+                },
+                onclick: {
+                    enable: true,
+                    mode: "push"
+                },
+                resize: true
+            },
+            modes: {
+                grab: {
+                    distance: 120,
+                    line_linked: {
+                        opacity: 1
+                    }
+                },
+                bubble: {
+                    distance: 400,
+                    size: 40,
+                    duration: 2,
+                    opacity: 8,
+                    speed: 3
+                },
+                repulse: {
+                    distance: 300
+                },
+                push: {
+                    particles_nb: 4
+                },
+                remove: {
+                    particles_nb: 2
+                }
+            }
+        },
+        retina_detect: true,
+        config_demo: {
+            hide_card: false,
+            background_color: "#b61924",
+            background_image: "",
+            background_position: "50% 50%",
+            background_repeat: "no-repeat",
+            background_size: "cover"
+        }
+    });
+</script>
+<script src="sound.js"></script>
+</body>
+</html>
